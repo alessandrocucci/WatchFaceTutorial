@@ -15,8 +15,8 @@ android {
         applicationId "it.alessandrocucci.watchface"
         minSdkVersion 18
         targetSdkVersion 21
-        versionCode 3
-        versionName "1.0.2"
+        versionCode 1
+        versionName "0.0.1"
         signingConfig signingConfigs.config
     }
     buildTypes {
