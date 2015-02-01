@@ -1,3 +1,4 @@
+![](https://raw.githubusercontent.com/alessandrocucci/WatchFaceTutorial/master/mockup.png)
 # Android Wear Watchface using Image Bitmaps
 
 This is a simple project to display an Android Wear analog watchface using only bitmaps instead of canvas drawLine functions to display hands. So, you can use this project to simply create new Android Watchfaces in seconds, changing only the background, hour, minute and second PNG files. 
