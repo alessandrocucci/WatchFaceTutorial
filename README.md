@@ -26,9 +26,11 @@ MIT
 
 **Free Software, Hell Yeah!**
 
+![](https://raw.githubusercontent.com/alessandrocucci/WatchFaceTutorial/master/mockup.png)
+
 [alessandro cucci]:http://www.alessandrocucci.it/
 [@alessandrocucci]:http://twitter.com/alessandrocucci
 [+AlessandroCucci]:https://plus.google.com/+AlessandroCucci
 
 
-![](https://raw.githubusercontent.com/alessandrocucci/WatchFaceTutorial/master/mockup.png)
+
