@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
@@ -38,10 +39,6 @@ public class CanvasHand extends CanvasWatchFaceService {
     private class Engine extends CanvasWatchFaceService.Engine {
         static final int MSG_UPDATE_TIME = 0;
 
-        Paint mHourPaint;
-        Paint mMinutePaint;
-        Paint mSecondPaint;
-        Paint mTickPaint;
         boolean mMute;
         Time mTime;
 
@@ -84,6 +81,15 @@ public class CanvasHand extends CanvasWatchFaceService {
         Bitmap mBackgroundBitmap;
         Bitmap mBackgroundScaledBitmap;
 
+        Bitmap mHourBitmap;
+        Bitmap mHourScaledBitmap;
+
+        Bitmap mMinuteBitmap;
+        Bitmap mMinuteScaledBitmap;
+
+        Bitmap mSecondBitmap;
+        Bitmap mSecondScaledBitmap;
+
         @Override
         public void onCreate(SurfaceHolder holder) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -101,28 +107,14 @@ public class CanvasHand extends CanvasWatchFaceService {
             Drawable backgroundDrawable = resources.getDrawable(R.drawable.image_1);
             mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
 
-            mHourPaint = new Paint();
-            mHourPaint.setARGB(255, 0, 102, 0);
-            mHourPaint.setStrokeWidth(5.f);
-            mHourPaint.setAntiAlias(true);
-            mHourPaint.setStrokeCap(Paint.Cap.ROUND);
+            Drawable hourDrawable = resources.getDrawable(R.drawable.hour);
+            mHourBitmap = ((BitmapDrawable) hourDrawable).getBitmap();
 
-            mMinutePaint = new Paint();
-            mMinutePaint.setARGB(255, 0, 102, 0);
-            mMinutePaint.setStrokeWidth(3.f);
-            mMinutePaint.setAntiAlias(true);
-            mMinutePaint.setStrokeCap(Paint.Cap.ROUND);
+            Drawable minuteDrawable = resources.getDrawable(R.drawable.minute);
+            mMinuteBitmap = ((BitmapDrawable) minuteDrawable).getBitmap();
 
-            mSecondPaint = new Paint();
-            mSecondPaint.setARGB(255, 255, 0, 0);
-            mSecondPaint.setStrokeWidth(2.f);
-            mSecondPaint.setAntiAlias(true);
-            mSecondPaint.setStrokeCap(Paint.Cap.ROUND);
-
-            mTickPaint = new Paint();
-            mTickPaint.setARGB(100, 255, 255, 255);
-            mTickPaint.setStrokeWidth(2.f);
-            mTickPaint.setAntiAlias(true);
+            Drawable secondDrawable = resources.getDrawable(R.drawable.second);
+            mSecondBitmap = ((BitmapDrawable) secondDrawable).getBitmap();
 
             mTime = new Time();
         }
@@ -159,10 +151,7 @@ public class CanvasHand extends CanvasWatchFaceService {
             }
             if (mLowBitAmbient) {
                 boolean antiAlias = !inAmbientMode;
-                mHourPaint.setAntiAlias(antiAlias);
-                mMinutePaint.setAntiAlias(antiAlias);
-                mSecondPaint.setAntiAlias(antiAlias);
-                mTickPaint.setAntiAlias(antiAlias);
+
             }
             invalidate();
 
@@ -177,9 +166,7 @@ public class CanvasHand extends CanvasWatchFaceService {
             boolean inMuteMode = (interruptionFilter == WatchFaceService.INTERRUPTION_FILTER_NONE);
             if (mMute != inMuteMode) {
                 mMute = inMuteMode;
-                mHourPaint.setAlpha(inMuteMode ? 100 : 255);
-                mMinutePaint.setAlpha(inMuteMode ? 100 : 255);
-                mSecondPaint.setAlpha(inMuteMode ? 80 : 255);
+
                 invalidate();
             }
         }
@@ -200,47 +187,70 @@ public class CanvasHand extends CanvasWatchFaceService {
             }
             canvas.drawBitmap(mBackgroundScaledBitmap, 0, 0, null);
 
-            // Find the center. Ignore the window insets so that, on round watches with a
-            // "chin", the watch face is centered on the entire screen, not just the usable
-            // portion.
-            float centerX = width / 2f;
-            float centerY = height / 2f;
 
-            // Draw the ticks.
-            float innerTickRadius = centerX - 10;
-            float outerTickRadius = centerX;
-            for (int tickIndex = 0; tickIndex < 12; tickIndex++) {
-                float tickRot = (float) (tickIndex * Math.PI * 2 / 12);
-                float innerX = (float) Math.sin(tickRot) * innerTickRadius;
-                float innerY = (float) -Math.cos(tickRot) * innerTickRadius;
-                float outerX = (float) Math.sin(tickRot) * outerTickRadius;
-                float outerY = (float) -Math.cos(tickRot) * outerTickRadius;
-                canvas.drawLine(centerX + innerX, centerY + innerY,
-                        centerX + outerX, centerY + outerY, mTickPaint);
-            }
-
-            float secRot = mTime.second / 30f * (float) Math.PI;
+            int seconds = mTime.second;
             int minutes = mTime.minute;
-            float minRot = minutes / 30f * (float) Math.PI;
-            float hrRot = ((mTime.hour + (minutes / 60f)) / 6f ) * (float) Math.PI;
+            int hours = mTime.hour;
 
-            float secLength = centerX - 20;
-            float minLength = centerX - 40;
-            float hrLength = centerX - 80;
+            float secRot = seconds / 30f * 180f;
+            float minRot = minutes / 30f * 180f;
+            float hrRot = hours / 6f * 180f;
+
+            // Draw the hour hand, scaled to fit.
+
+            // Rotate the hour hand
+            if (mHourScaledBitmap == null
+                    || mHourScaledBitmap.getWidth() != width
+                    || mHourScaledBitmap.getHeight() != height) {
+                mHourScaledBitmap = Bitmap.createScaledBitmap(mHourBitmap,
+                        width, height, true /* filter */);
+            }
+            // Rotate
+            canvas.save();
+            canvas.rotate(hrRot,canvas.getWidth()/2,canvas.getHeight()/2);
+
+
+            canvas.drawBitmap(mHourScaledBitmap, 0, 0, null);
+
+            canvas.restore();
+
+            // Draw the minute hand, scaled to fit.
+
+            // Rotate the minute hand
+            if (mMinuteScaledBitmap == null
+                    || mMinuteScaledBitmap.getWidth() != width
+                    || mMinuteScaledBitmap.getHeight() != height) {
+                mMinuteScaledBitmap = Bitmap.createScaledBitmap(mMinuteBitmap,
+                        width, height, true /* filter */);
+            }
+            // Rotate the second hand
+            canvas.save();
+            canvas.rotate(minRot,canvas.getWidth()/2,canvas.getHeight()/2);
+
+
+            canvas.drawBitmap(mMinuteScaledBitmap, 0, 0, null);
+
+            canvas.restore();
+
 
             if (!isInAmbientMode()) {
-                float secX = (float) Math.sin(secRot) * secLength;
-                float secY = (float) -Math.cos(secRot) * secLength;
-                canvas.drawLine(centerX, centerY, centerX + secX, centerY + secY, mSecondPaint);
+                if (mSecondScaledBitmap == null
+                        || mSecondScaledBitmap.getWidth() != width
+                        || mSecondScaledBitmap.getHeight() != height) {
+                    mSecondScaledBitmap = Bitmap.createScaledBitmap(mSecondBitmap,
+                            width, height, true /* filter */);
+                }
+                // Rotate the second hand
+                canvas.save();
+                canvas.rotate(secRot,canvas.getWidth()/2,canvas.getHeight()/2);
+
+
+                canvas.drawBitmap(mSecondScaledBitmap, 0, 0, null);
+
+                canvas.restore();
+
             }
 
-            float minX = (float) Math.sin(minRot) * minLength;
-            float minY = (float) -Math.cos(minRot) * minLength;
-            canvas.drawLine(centerX, centerY, centerX + minX, centerY + minY, mMinutePaint);
-
-            float hrX = (float) Math.sin(hrRot) * hrLength;
-            float hrY = (float) -Math.cos(hrRot) * hrLength;
-            canvas.drawLine(centerX, centerY, centerX + hrX, centerY + hrY, mHourPaint);
         }
 
         @Override
