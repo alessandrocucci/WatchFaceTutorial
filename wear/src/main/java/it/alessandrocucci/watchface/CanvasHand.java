@@ -194,7 +194,7 @@ public class CanvasHand extends CanvasWatchFaceService {
 
             float secRot = seconds / 30f * 180f;
             float minRot = minutes / 30f * 180f;
-            float hrRot = (hours + (minutes / 60f) / 6f * 180f);
+            float hrRot = ((hours + (minutes / 60f)) / 6f * 180f);
 
             // Draw the hour hand, scaled to fit.
 
