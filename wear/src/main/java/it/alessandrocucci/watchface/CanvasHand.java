@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -87,6 +88,8 @@ public class CanvasHand extends CanvasWatchFaceService {
 
         Bitmap mSecondBitmap;
         Bitmap mSecondScaledBitmap;
+        
+        Paint mPaint;
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -113,6 +116,9 @@ public class CanvasHand extends CanvasWatchFaceService {
 
             Drawable secondDrawable = resources.getDrawable(R.drawable.second);
             mSecondBitmap = ((BitmapDrawable) secondDrawable).getBitmap();
+
+            mPaint = new Paint();
+            mPaint.setFilterBitmap(true);
 
             mTime = new Time();
         }
@@ -183,7 +189,7 @@ public class CanvasHand extends CanvasWatchFaceService {
                 mBackgroundScaledBitmap = Bitmap.createScaledBitmap(mBackgroundBitmap,
                         width, height, true /* filter */);
             }
-            canvas.drawBitmap(mBackgroundScaledBitmap, 0, 0, null);
+            canvas.drawBitmap(mBackgroundScaledBitmap, 0, 0, mPaint);
 
 
             int seconds = mTime.second;
@@ -208,7 +214,7 @@ public class CanvasHand extends CanvasWatchFaceService {
             canvas.rotate(hrRot,canvas.getWidth()/2,canvas.getHeight()/2);
 
 
-            canvas.drawBitmap(mHourScaledBitmap, 0, 0, null);
+            canvas.drawBitmap(mHourScaledBitmap, 0, 0, mPaint);
 
             canvas.restore();
 
@@ -226,7 +232,7 @@ public class CanvasHand extends CanvasWatchFaceService {
             canvas.rotate(minRot,canvas.getWidth()/2,canvas.getHeight()/2);
 
 
-            canvas.drawBitmap(mMinuteScaledBitmap, 0, 0, null);
+            canvas.drawBitmap(mMinuteScaledBitmap, 0, 0, mPaint);
 
             canvas.restore();
 
@@ -243,7 +249,7 @@ public class CanvasHand extends CanvasWatchFaceService {
                 canvas.rotate(secRot,canvas.getWidth()/2,canvas.getHeight()/2);
 
 
-                canvas.drawBitmap(mSecondScaledBitmap, 0, 0, null);
+                canvas.drawBitmap(mSecondScaledBitmap, 0, 0, mPaint);
 
                 canvas.restore();
 
